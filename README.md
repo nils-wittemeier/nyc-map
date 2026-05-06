@@ -20,7 +20,7 @@ Built as a single-page progressive web app: vanilla JavaScript, [Leaflet](https:
 
 1. Open the [live app](https://nils-wittemeier.github.io/nyc-map/) in a browser.
 2. Click any polygon to open its details panel. Clicking does **not** mark a neighborhood visited — that's a deliberate button in the panel, so you can explore the map without toggling things by accident.
-3. In the panel, **Mark as visited** turns the polygon green and fills in the date. Add notes, favorite spots, or **+ Add to plan** to stage the neighborhood as a stop on a walking route.
+3. In the panel, **Mark as visited** highlights the polygon in rose and fills in today's date. Add notes, favorite spots, or **+ Add to plan** to stage the neighborhood as a stop on a walking route.
 4. Use the **List**, **Plan**, and **Stats** tabs as you like. Filters and the active selection persist across reloads.
 
 ### Install on phone

@@ -33,39 +33,45 @@ function ntaTypeLabel(feature) {
   return NTA_TYPE_LABELS[feature.properties.ntatype] || 'Other';
 }
 
-const STYLE_DEFAULT = {
-  color: '#475569',
-  weight: 1,
-  fillColor: '#9ca3af',
-  fillOpacity: 0.35,
+// Pale tints per ntatype — subtle hue variation that complements the basemap.
+const FILL_BY_TYPE = {
+  '0': '#cbd5e1', // slate-300   — residential
+  '5': '#cbd5e1', // slate-300   — Rikers
+  '6': '#cbd5e1', // slate-300   — other large non-residential
+  '7': '#d6d3d1', // stone-300   — cemetery
+  '8': '#bae6fd', // sky-200     — airport
+  '9': '#86efac', // green-300   — park
 };
+const FILL_OPACITY_DEFAULT = 0.40;
+
+const STYLE_OUTLINE_DEFAULT = { color: '#475569', weight: 1 }; // slate-600
 
 const STYLE_VISITED = {
-  color: '#14532d',
-  weight: 1,
-  fillColor: '#16a34a',
-  fillOpacity: 0.55,
+  fillColor: '#fb7185',         // rose-400
+  fillOpacity: 0.6,
+  color: '#9f1239',             // rose-800
+  weight: 1.5,
 };
 
 const STYLE_SELECTED_OUTLINE = {
-  color: '#2563eb',
+  color: '#2563eb',             // blue-600
   weight: 3,
 };
 
 const STYLE_PLAN_OUTLINE = {
-  color: '#7c3aed',           // violet-600
+  color: '#7c3aed',             // violet-600
   weight: 3,
 };
 
 const STYLE_PLAN_FILL_UNVISITED = {
-  fillColor: '#a78bfa',       // violet-400
+  fillColor: '#a78bfa',         // violet-400
   fillOpacity: 0.5,
 };
 
 const STYLE_HOVER = {
   color: '#ffffff',
   weight: 2,
-  fillOpacity: 0.6,
+  fillOpacity: 0.65,
 };
 
 function featureKey(feature) {
@@ -198,12 +204,18 @@ function styleFor(feature) {
   const visited = isVisited(key);
   const planned = isInPlan(key);
 
-  // Fill: visited green wins; otherwise planned violet; otherwise default gray.
-  let s = { ...STYLE_DEFAULT };
+  // Base: pale tint per ntatype + default outline.
+  let s = {
+    fillColor: FILL_BY_TYPE[feature.properties.ntatype] || FILL_BY_TYPE['0'],
+    fillOpacity: FILL_OPACITY_DEFAULT,
+    ...STYLE_OUTLINE_DEFAULT,
+  };
+
+  // Visited rose wins over planned violet; either replaces the type tint.
   if (visited) s = { ...s, ...STYLE_VISITED };
   else if (planned) s = { ...s, ...STYLE_PLAN_FILL_UNVISITED };
 
-  // Outline: selected blue > planned violet > default.
+  // Outline: selected blue > planned violet > visited rose / default slate.
   if (planned) s = { ...s, ...STYLE_PLAN_OUTLINE };
   if (key === ui.selectedKey) s = { ...s, ...STYLE_SELECTED_OUTLINE };
 
@@ -368,11 +380,11 @@ function renderDetails() {
         <div class="text-xs text-slate-500">${escapeHtml(f.properties.boroname)} &middot; ${escapeHtml(ntaTypeLabel(f))}</div>
       </div>
       ${v.visited
-        ? `<button id="d-toggle" class="w-full rounded border border-green-600 bg-green-50 text-green-800 hover:bg-green-100 text-sm font-medium px-3 py-2 flex items-center justify-center gap-2">
+        ? `<button id="d-toggle" class="w-full rounded border border-rose-500 bg-rose-50 text-rose-800 hover:bg-rose-100 text-sm font-medium px-3 py-2 flex items-center justify-center gap-2">
             <span>&#10003; Visited</span>
-            <span class="text-xs font-normal text-green-700">— click to unmark</span>
+            <span class="text-xs font-normal text-rose-700">— click to unmark</span>
           </button>`
-        : `<button id="d-toggle" class="w-full rounded bg-green-600 text-white hover:bg-green-700 text-sm font-semibold px-3 py-2">
+        : `<button id="d-toggle" class="w-full rounded bg-rose-500 text-white hover:bg-rose-600 text-sm font-semibold px-3 py-2">
             Mark as visited
           </button>`
       }
@@ -513,7 +525,7 @@ function renderListItems() {
     return `
       <li>
         <button data-key="${key}" class="w-full text-left px-3 py-2 hover:bg-slate-50 flex items-center gap-2 ${isSel ? 'bg-blue-50' : ''}">
-          <span class="inline-block w-2 h-2 rounded-full ${visited ? 'bg-green-500' : 'bg-slate-300'}"></span>
+          <span class="inline-block w-2 h-2 rounded-full ${visited ? 'bg-rose-500' : 'bg-slate-300'}"></span>
           <span class="flex-1 truncate text-sm">${escapeHtml(f.properties.ntaname)}</span>
           <span class="text-xs text-slate-400">${escapeHtml(f.properties.boroname)}</span>
         </button>
@@ -549,7 +561,7 @@ function renderPlan() {
                 <span class="inline-flex items-center justify-center w-6 h-6 rounded-full bg-violet-600 text-white text-xs font-semibold flex-shrink-0">${i + 1}</span>
                 <button data-action="select" data-key="${key}" class="flex-1 text-left min-w-0">
                   <div class="text-sm flex items-center gap-2 truncate">
-                    <span class="inline-block w-2 h-2 rounded-full flex-shrink-0 ${visited ? 'bg-green-500' : 'bg-slate-300'}"></span>
+                    <span class="inline-block w-2 h-2 rounded-full flex-shrink-0 ${visited ? 'bg-rose-500' : 'bg-slate-300'}"></span>
                     <span class="truncate">${escapeHtml(f.properties.ntaname)}</span>
                   </div>
                   <div class="text-xs text-slate-500 ml-4">${escapeHtml(f.properties.boroname)}</div>
@@ -642,7 +654,7 @@ function renderStats() {
         </div>
         <div class="text-sm text-slate-500">${pct}% complete</div>
         <div class="mt-2 h-2 bg-slate-200 rounded">
-          <div class="h-2 bg-green-500 rounded transition-all" style="width: ${pct}%"></div>
+          <div class="h-2 bg-rose-500 rounded transition-all" style="width: ${pct}%"></div>
         </div>
       </div>
       <div>
@@ -658,7 +670,7 @@ function renderStats() {
                   <span class="text-slate-500">${s.visited}/${s.total} &middot; ${p}%</span>
                 </div>
                 <div class="mt-1 h-1.5 bg-slate-200 rounded">
-                  <div class="h-1.5 bg-green-500 rounded transition-all" style="width: ${p}%"></div>
+                  <div class="h-1.5 bg-rose-500 rounded transition-all" style="width: ${p}%"></div>
                 </div>
               </li>`;
           }).join('')}
