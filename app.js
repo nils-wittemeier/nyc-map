@@ -35,22 +35,22 @@ function ntaTypeLabel(feature) {
 
 // Pale tints per ntatype — subtle hue variation that complements the basemap.
 const FILL_BY_TYPE = {
-  '0': '#cbd5e1', // slate-300   — residential
-  '5': '#cbd5e1', // slate-300   — Rikers
-  '6': '#cbd5e1', // slate-300   — other large non-residential
-  '7': '#d6d3d1', // stone-300   — cemetery
+  '0': '#93c5fd', // blue-300    — residential (light blue)
+  '5': '#fde68a', // amber-200   — Rikers
+  '6': '#fde68a', // amber-200   — other large non-residential
+  '7': '#a8a29e', // stone-400   — cemetery (muted/somber)
   '8': '#bae6fd', // sky-200     — airport
-  '9': '#86efac', // green-300   — park
+  '9': '#c8e6c9', //              — park (muted sage; matches map-cartography convention)
 };
 const FILL_OPACITY_DEFAULT = 0.40;
 
 const STYLE_OUTLINE_DEFAULT = { color: '#475569', weight: 1 }; // slate-600
 
 const STYLE_VISITED = {
-  fillColor: '#fb7185',         // rose-400
+  fillColor: '#10b981',         // emerald-500 — saturated, slightly teal-leaning
   fillOpacity: 0.6,
-  color: '#9f1239',             // rose-800
-  weight: 1.5,
+  color: '#065f46',             // emerald-800
+  weight: 3,                    // thick border, matching the plan outline
 };
 
 const STYLE_SELECTED_OUTLINE = {
@@ -380,11 +380,11 @@ function renderDetails() {
         <div class="text-xs text-slate-500">${escapeHtml(f.properties.boroname)} &middot; ${escapeHtml(ntaTypeLabel(f))}</div>
       </div>
       ${v.visited
-        ? `<button id="d-toggle" class="w-full rounded border border-rose-500 bg-rose-50 text-rose-800 hover:bg-rose-100 text-sm font-medium px-3 py-2 flex items-center justify-center gap-2">
+        ? `<button id="d-toggle" class="w-full rounded border border-emerald-600 bg-emerald-50 text-emerald-800 hover:bg-emerald-100 text-sm font-medium px-3 py-2 flex items-center justify-center gap-2">
             <span>&#10003; Visited</span>
-            <span class="text-xs font-normal text-rose-700">— click to unmark</span>
+            <span class="text-xs font-normal text-emerald-700">— click to unmark</span>
           </button>`
-        : `<button id="d-toggle" class="w-full rounded bg-rose-500 text-white hover:bg-rose-600 text-sm font-semibold px-3 py-2">
+        : `<button id="d-toggle" class="w-full rounded bg-emerald-600 text-white hover:bg-emerald-700 text-sm font-semibold px-3 py-2">
             Mark as visited
           </button>`
       }
@@ -419,7 +419,13 @@ function renderDetails() {
   `;
 
   document.getElementById('d-toggle').addEventListener('click', () => {
-    updateVisit(ui.selectedKey, { visited: !isVisited(ui.selectedKey) });
+    const willBeVisited = !isVisited(ui.selectedKey);
+    updateVisit(ui.selectedKey, { visited: willBeVisited });
+    // Mark-visited removes the stop from the plan automatically
+    // (a visited place isn't a future destination anymore).
+    if (willBeVisited && isInPlan(ui.selectedKey)) {
+      removeFromPlan(ui.selectedKey);
+    }
     renderDetails(); // refresh button label + auto-filled date
   });
   document.getElementById('d-plan-toggle').addEventListener('click', () => {
@@ -525,7 +531,7 @@ function renderListItems() {
     return `
       <li>
         <button data-key="${key}" class="w-full text-left px-3 py-2 hover:bg-slate-50 flex items-center gap-2 ${isSel ? 'bg-blue-50' : ''}">
-          <span class="inline-block w-2 h-2 rounded-full ${visited ? 'bg-rose-500' : 'bg-slate-300'}"></span>
+          <span class="inline-block w-2 h-2 rounded-full ${visited ? 'bg-emerald-500' : 'bg-slate-300'}"></span>
           <span class="flex-1 truncate text-sm">${escapeHtml(f.properties.ntaname)}</span>
           <span class="text-xs text-slate-400">${escapeHtml(f.properties.boroname)}</span>
         </button>
@@ -561,7 +567,7 @@ function renderPlan() {
                 <span class="inline-flex items-center justify-center w-6 h-6 rounded-full bg-violet-600 text-white text-xs font-semibold flex-shrink-0">${i + 1}</span>
                 <button data-action="select" data-key="${key}" class="flex-1 text-left min-w-0">
                   <div class="text-sm flex items-center gap-2 truncate">
-                    <span class="inline-block w-2 h-2 rounded-full flex-shrink-0 ${visited ? 'bg-rose-500' : 'bg-slate-300'}"></span>
+                    <span class="inline-block w-2 h-2 rounded-full flex-shrink-0 ${visited ? 'bg-emerald-500' : 'bg-slate-300'}"></span>
                     <span class="truncate">${escapeHtml(f.properties.ntaname)}</span>
                   </div>
                   <div class="text-xs text-slate-500 ml-4">${escapeHtml(f.properties.boroname)}</div>
@@ -654,7 +660,7 @@ function renderStats() {
         </div>
         <div class="text-sm text-slate-500">${pct}% complete</div>
         <div class="mt-2 h-2 bg-slate-200 rounded">
-          <div class="h-2 bg-rose-500 rounded transition-all" style="width: ${pct}%"></div>
+          <div class="h-2 bg-emerald-500 rounded transition-all" style="width: ${pct}%"></div>
         </div>
       </div>
       <div>
@@ -670,7 +676,7 @@ function renderStats() {
                   <span class="text-slate-500">${s.visited}/${s.total} &middot; ${p}%</span>
                 </div>
                 <div class="mt-1 h-1.5 bg-slate-200 rounded">
-                  <div class="h-1.5 bg-rose-500 rounded transition-all" style="width: ${p}%"></div>
+                  <div class="h-1.5 bg-emerald-500 rounded transition-all" style="width: ${p}%"></div>
                 </div>
               </li>`;
           }).join('')}
