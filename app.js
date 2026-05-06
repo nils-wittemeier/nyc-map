@@ -265,17 +265,161 @@ function refreshAllStyles() {
   }
 }
 
-// Average-of-vertices centroid. Good enough for NYC neighborhood polygons —
-// avoids the bbox-center-falls-outside problem of getBounds().getCenter().
-function polygonCentroid(layer) {
-  let outer = layer.getLatLngs();
-  while (Array.isArray(outer) && outer.length > 0 && Array.isArray(outer[0])) {
-    outer = outer[0];
+// Pole of inaccessibility — the point inside the polygon farthest from any edge.
+// Robust to vertex density and concave shapes; always lands inside.
+// Adapted from Mapbox polylabel (ISC license), inlined to avoid a CDN dep.
+function polylabel(polygon, precision = 0.0001) {
+  let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+  for (const [x, y] of polygon[0]) {
+    if (x < minX) minX = x;
+    if (y < minY) minY = y;
+    if (x > maxX) maxX = x;
+    if (y > maxY) maxY = y;
   }
-  if (!outer || !outer.length) return null;
-  let sumLat = 0, sumLng = 0;
-  for (const ll of outer) { sumLat += ll.lat; sumLng += ll.lng; }
-  return [sumLat / outer.length, sumLng / outer.length];
+  const width = maxX - minX, height = maxY - minY;
+  const cellSize = Math.min(width, height);
+  if (cellSize === 0) return [minX, minY];
+  let h = cellSize / 2;
+
+  // max-heap of cells, ordered by `.max` (best possible distance) descending
+  const queue = [];
+  const up = () => {
+    let i = queue.length - 1;
+    while (i > 0) {
+      const p = (i - 1) >> 1;
+      if (queue[p].max >= queue[i].max) break;
+      [queue[p], queue[i]] = [queue[i], queue[p]];
+      i = p;
+    }
+  };
+  const enqueue = (c) => { queue.push(c); up(); };
+  const dequeue = () => {
+    const top = queue[0];
+    const last = queue.pop();
+    if (queue.length > 0) {
+      queue[0] = last;
+      let i = 0;
+      const n = queue.length;
+      for (;;) {
+        const l = 2 * i + 1, r = l + 1;
+        let best = i;
+        if (l < n && queue[l].max > queue[best].max) best = l;
+        if (r < n && queue[r].max > queue[best].max) best = r;
+        if (best === i) break;
+        [queue[i], queue[best]] = [queue[best], queue[i]];
+        i = best;
+      }
+    }
+    return top;
+  };
+
+  // seed with a grid of cells covering the bounding box
+  for (let x = minX; x < maxX; x += cellSize) {
+    for (let y = minY; y < maxY; y += cellSize) {
+      enqueue(makeCell(x + h, y + h, h, polygon));
+    }
+  }
+  // initial best guess: bbox center, then signed-area centroid
+  let best = makeCell(minX + width / 2, minY + height / 2, 0, polygon);
+  const c = signedAreaCentroid(polygon[0]);
+  if (c) {
+    const cc = makeCell(c[0], c[1], 0, polygon);
+    if (cc.d > best.d) best = cc;
+  }
+
+  while (queue.length) {
+    const cell = dequeue();
+    if (cell.d > best.d) best = cell;
+    if (cell.max - best.d <= precision) continue;
+    h = cell.h / 2;
+    enqueue(makeCell(cell.x - h, cell.y - h, h, polygon));
+    enqueue(makeCell(cell.x + h, cell.y - h, h, polygon));
+    enqueue(makeCell(cell.x - h, cell.y + h, h, polygon));
+    enqueue(makeCell(cell.x + h, cell.y + h, h, polygon));
+  }
+  return [best.x, best.y];
+}
+
+function makeCell(x, y, h, polygon) {
+  const d = pointToPolygonDist(x, y, polygon);
+  return { x, y, h, d, max: d + h * Math.SQRT2 };
+}
+
+// Signed distance from (x,y) to polygon edges; positive when inside.
+function pointToPolygonDist(x, y, polygon) {
+  let inside = false;
+  let minDistSq = Infinity;
+  for (const ring of polygon) {
+    for (let i = 0, j = ring.length - 1; i < ring.length; j = i++) {
+      const a = ring[i], b = ring[j];
+      if ((a[1] > y) !== (b[1] > y) &&
+          x < (b[0] - a[0]) * (y - a[1]) / (b[1] - a[1]) + a[0]) inside = !inside;
+      minDistSq = Math.min(minDistSq, segDistSq(x, y, a, b));
+    }
+  }
+  return (inside ? 1 : -1) * Math.sqrt(minDistSq);
+}
+
+function segDistSq(px, py, a, b) {
+  let x = a[0], y = a[1];
+  let dx = b[0] - x, dy = b[1] - y;
+  if (dx !== 0 || dy !== 0) {
+    const t = ((px - x) * dx + (py - y) * dy) / (dx * dx + dy * dy);
+    if (t > 1) { x = b[0]; y = b[1]; }
+    else if (t > 0) { x += dx * t; y += dy * t; }
+  }
+  dx = px - x; dy = py - y;
+  return dx * dx + dy * dy;
+}
+
+function signedAreaCentroid(ring) {
+  let area2 = 0, cx = 0, cy = 0;
+  for (let i = 0, j = ring.length - 1; i < ring.length; j = i++) {
+    const a = ring[i], b = ring[j];
+    const f = a[0] * b[1] - b[0] * a[1];
+    cx += (a[0] + b[0]) * f;
+    cy += (a[1] + b[1]) * f;
+    area2 += f * 3;
+  }
+  if (area2 === 0) return null;
+  return [cx / area2, cy / area2];
+}
+
+function ringBboxArea(ring) {
+  let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+  for (const [x, y] of ring) {
+    if (x < minX) minX = x;
+    if (y < minY) minY = y;
+    if (x > maxX) maxX = x;
+    if (y > maxY) maxY = y;
+  }
+  return (maxX - minX) * (maxY - minY);
+}
+
+// Wraps polylabel for use with Leaflet GeoJSON layers. For MultiPolygons,
+// labels the largest sub-polygon (by bounding-box area).
+function polygonCentroid(layer) {
+  const geom = layer.feature && layer.feature.geometry;
+  if (!geom) return null;
+
+  let polygon;
+  if (geom.type === 'MultiPolygon') {
+    let bestA = -1, bestP = null;
+    for (const p of geom.coordinates) {
+      const a = ringBboxArea(p[0]);
+      if (a > bestA) { bestA = a; bestP = p; }
+    }
+    polygon = bestP;
+  } else if (geom.type === 'Polygon') {
+    polygon = geom.coordinates;
+  } else {
+    return null;
+  }
+  if (!polygon) return null;
+
+  // polylabel uses GeoJSON [lng, lat]; precision ~0.0001° ≈ 11m at NYC's latitude.
+  const [lng, lat] = polylabel(polygon, 0.0001);
+  return [lat, lng];
 }
 
 let planMarkersLayer = null;
