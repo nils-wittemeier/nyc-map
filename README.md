@@ -1,130 +1,86 @@
 # NYC Neighborhood Tracker
 
-A personal web app to track which NYC neighborhoods you've visited. Open `index.html` in any modern browser — no build step, no server.
+A small web app for marking off NYC neighborhoods you've visited and planning walking routes between them. Tap a neighborhood, mark it visited, add a date and notes — or string several into an ordered walking plan.
 
-## How to run
+Built as a single-page progressive web app: vanilla JavaScript, [Leaflet](https://leafletjs.com/) for the map, no build step. Your data lives in the browser's `localStorage`; export to JSON when you want to back up or sync between devices.
 
-**Local (no install):** Double-click `index.html`. The app loads Leaflet and Tailwind from CDNs, so an internet connection is required for the first load and for map tiles. Note: service worker / offline / "Add to Home Screen" features only work over HTTP(S), not `file://` — see the PWA section below for offline + phone use.
+**Live app:** <https://nils-wittemeier.github.io/nyc-map/>
 
-**As a PWA on your phone:** Deploy to GitHub Pages (free) and tap "Add to Home Screen" in mobile Safari/Chrome. Instructions below.
+## Features
 
-## Data source
+- **Interactive map** of all 197 residential NYC Neighborhood Tabulation Areas (NTAs). Hover for the name, click to inspect.
+- **Per-neighborhood detail:** mark visited (auto-fills today's date), free-text notes, favorite-spots list.
+- **List** with full-text search and filters by borough or visited / unvisited.
+- **Plan** an ordered walking route — drag-and-drop to reorder. Stops are drawn on the map as a violet fill with numbered markers and a connecting line.
+- **Stats** with overall progress and a per-borough breakdown.
+- **Offline-ready PWA** — installable to the home screen on iOS and Android; works without network for areas already viewed.
+- **JSON export / import** for backup and manual cross-device sync.
 
-The map shows the **NYC 2020 Neighborhood Tabulation Areas (NTAs)** from NYC Open Data, filtered to the 197 residential NTAs (`ntatype = 0`).
+## Using the app
 
-- Raw data: `data/nyc-neighborhoods-2020-nta.geojson` (262 features — includes parks, cemeteries, airports)
-- Filtered + wrapped for the app: `data/neighborhoods.js` (197 features, exposed as `window.NEIGHBORHOODS_GEOJSON`)
-- Source URL: `https://data.cityofnewyork.us/resource/9nt8-h7nd.geojson?$limit=300`
+1. Open the [live app](https://nils-wittemeier.github.io/nyc-map/) in a browser.
+2. Click any polygon to open its details panel. Clicking does **not** mark a neighborhood visited — that's a deliberate button in the panel, so you can explore the map without toggling things by accident.
+3. In the panel, **Mark as visited** turns the polygon green and fills in the date. Add notes, favorite spots, or **+ Add to plan** to stage the neighborhood as a stop on a walking route.
+4. Use the **List**, **Plan**, and **Stats** tabs as you like. Filters and the active selection persist across reloads.
 
-### Why 197 and not 262?
+### Install on phone
 
-The full NTA dataset includes non-residential places: cemeteries (e.g. Green-Wood), airports (JFK, LaGuardia), Rikers Island, and large parks (Lincoln Terrace Park, Calvert Vaux Park, etc.). These don't really fit the "neighborhoods we've visited" idea, so they're filtered out by `ntatype = 0`. To include them, regenerate `data/neighborhoods.js` without the filter.
+- **iPhone:** open the live link in **Safari** → Share button → **Add to Home Screen**.
+- **Android:** open in **Chrome** → menu (⋮) → **Install app**.
 
-### Why this dataset and not Pediacities?
+After installing, it launches like a native app — fullscreen, with map tiles cached for offline use.
 
-The original Pediacities NYC neighborhoods (~310 features) was hosted at `data.beta.nyc`, which is offline. Most online "Pediacities mirrors" actually serve the smaller snd3 NTA file (188 features, no borough field). The NYC Open Data 2020 NTAs are an authoritative substitute with native `boroname` and slightly finer detail than snd3.
+## Where is my data?
 
-The original snd3 file is preserved at `data/nyc-neighborhoods.geojson` for reference.
+In your browser's `localStorage` under the key `nyc-tracker-v1`. It is **not** synced between devices or browsers — each install is independent.
 
-## Project structure
+It survives closing the tab, closing the browser, and reloading. You'll lose it only if you clear browser site data, switch browsers / profiles / devices, or use private mode.
 
-```
-.
-├── index.html                              # entry point
-├── app.js                                  # all app logic
-├── styles.css                              # small custom CSS
-├── data/
-│   ├── neighborhoods.js                    # the data the app actually uses
-│   ├── nyc-neighborhoods-2020-nta.geojson  # raw NYC OpenData download (262)
-│   └── nyc-neighborhoods.geojson           # original snd3 file (188), kept for reference
-└── README.md
-```
+For backup or cross-device sync, use **Export JSON** in the Stats tab, then **Import JSON** on the other device. The exported file is a portable snapshot of all visits and the current plan.
 
-## Status
+## Running locally / forking
 
-All four checkpoints from the plan are implemented:
+The app is a static site with no build step.
 
-- **Checkpoint 1:** Map renders all 197 neighborhoods, hover tooltip.
-- **Checkpoint 2:** Click toggles visited state (gray ↔ green), persisted to `localStorage` under `nyc-tracker-v1`.
-- **Checkpoint 3:** Right-docked side panel with three tabs:
-  - **Details** — visited checkbox, date picker, notes, favorite-spots list
-  - **List** — search box, borough filter, visited/unvisited filter; click to fly to
-  - **Stats** — global progress + per-borough breakdown
-- **Checkpoint 4:** JSON export/import (Stats tab), mobile bottom-drawer layout.
-- **Plan tab:** build an ordered route (A → B → C …) of neighborhoods to walk. Add stops from the Details tab, reorder/remove from the Plan tab. Stops appear on the map as a violet fill with a numbered marker, connected by a dashed violet line.
-
-## How click & panel interact
-
-- Click a polygon → opens the Details panel for it (does **not** mark it visited — avoids accidental toggling while exploring).
-- In the Details panel, click **Mark as visited** → polygon turns green and today's date is auto-filled.
-- Click again on the green "✓ Visited" pill in the panel to unmark.
-- Click on empty map → deselects.
-- Chevron in the panel header → collapses the panel.
-
-## Where is my data stored?
-
-In your browser's **`localStorage`** under the key `nyc-tracker-v1` (it's not cookies). To inspect it: open DevTools → Application → Local Storage → `file://` (or wherever you opened `index.html` from).
-
-**It survives:** closing the tab, closing the browser, restarting the computer, reloading the page.
-
-**It is lost only if you:**
-
-- clear browser site data / "clear cookies and site data" (some browsers lump localStorage in here)
-- use a different browser, profile, or device
-- open the file in private/incognito mode (cleared when the private session ends)
-
-Bottom line: closing the page is fine, you don't need to export every time. **Do export** before clearing browser data, switching browsers/devices, or any major OS reset. The exported JSON is your portable backup.
-
-## Deploying as a PWA (GitHub Pages)
-
-The repo already includes `manifest.json`, `service-worker.js`, and icons. Steps:
-
-1. **Make it a git repo and push to GitHub:**
-   ```powershell
-   cd C:\Users\Juijan\Documents\NYC-map
-   git init
-   git add .
-   git commit -m "NYC Neighborhood Tracker"
-   git branch -M main
-   git remote add origin https://github.com/<your-username>/nyc-map.git
-   git push -u origin main
-   ```
-
-2. **Enable Pages:** in the repo on github.com → Settings → Pages → Source: `Deploy from a branch`, Branch: `main` / `/ (root)`. Save. After ~30s the URL will be `https://<your-username>.github.io/nyc-map/`.
-
-3. **Test in desktop Chrome:** open the URL. DevTools → Application → Service Workers should show one registered. Application → Manifest should show the icons + name parsed without errors.
-
-4. **Install on iPhone:** open the URL in **Safari** (not Chrome — only Safari can install PWAs on iOS). Tap the Share button → "Add to Home Screen". You get an app icon, fullscreen UI on launch, and offline map tiles for areas you've already viewed.
-
-5. **Install on Android:** open the URL in Chrome. Either tap the auto-prompt that appears, or menu → "Install app" / "Add to Home screen".
-
-### Local PWA testing without deploying
-
-Service workers don't work over `file://`. To test locally with a real HTTPS-equivalent (`http://localhost` is treated as secure):
-
-```powershell
-cd C:\Users\Juijan\Documents\NYC-map
+```sh
+git clone https://github.com/nils-wittemeier/nyc-map.git
+cd nyc-map
 python -m http.server 8000
 ```
 
-Then open `http://localhost:8000`. The "Add to Home Screen" flow is normally only triggered for HTTPS, so for actual install testing use the GitHub Pages URL.
+Then open <http://localhost:8000>. Service-worker and PWA install features require HTTP(S), not `file://`, so use the local server (or a deployed copy) for those — opening `index.html` directly works for everything else.
 
-### Updating after a deploy
+To deploy your own copy: fork the repo, then **Settings → Pages → Source: Deploy from a branch → main / (root)**. Your copy will be live at `https://<your-username>.github.io/<repo-name>/` within a minute.
 
-Bump the version in `service-worker.js` (`SHELL_CACHE = 'nyc-tracker-shell-v2'`, etc.) any time you change `index.html`/`app.js`/`styles.css`/`data/neighborhoods.js`. Old caches are pruned on the next visit, and the new version takes effect after the user reloads twice (once to install the new SW, once to activate).
+When you change app code, bump the cache version near the top of `service-worker.js` (`'nyc-tracker-shell-vN'`) so installed clients pick up the new build on their next reload.
 
-## Regenerating `data/neighborhoods.js`
+## Data source
 
-If you want to change the filter (e.g. include parks) or refresh the dataset, run this in PowerShell from the project root:
+The map uses the **NYC 2020 Neighborhood Tabulation Areas (NTAs)** from NYC Open Data, filtered to the 197 residential NTAs (`ntatype = 0`). The filter excludes parks, cemeteries, airports, and Rikers Island.
 
-```powershell
-$raw = Get-Content 'data/nyc-neighborhoods-2020-nta.geojson' -Raw
-$json = $raw | ConvertFrom-Json
-# Change the filter below to include other ntatypes:
-#   0 = residential, 5 = Rikers, 6 = large non-residential, 7 = cemeteries,
-#   8 = airports, 9 = parks
-$filtered = @{ type='FeatureCollection'; features=@($json.features | Where-Object { $_.properties.ntatype -eq '0' }) }
-$body = ($filtered | ConvertTo-Json -Depth 20 -Compress)
-$out = "window.NEIGHBORHOODS_GEOJSON = $body;`n"
-[System.IO.File]::WriteAllText('data/neighborhoods.js', $out, (New-Object System.Text.UTF8Encoding $false))
+- Source: <https://data.cityofnewyork.us/resource/9nt8-h7nd.geojson>
+- Stable per-feature key: `nta2020` (e.g. `BK0101` for Greenpoint)
+- Borough comes from the dataset's `boroname` field.
+
+The raw GeoJSON is checked in at `data/nyc-neighborhoods-2020-nta.geojson` for transparency. At runtime the app loads `data/neighborhoods.js`, a wrapped + filtered version (wrapping is necessary because `file://` origin can't `fetch()` local JSON in most browsers). Regeneration instructions are in the comment at the top of `data/neighborhoods.js`.
+
+## Project layout
+
 ```
+.
+├── index.html          entry point + CDN deps
+├── app.js              all client logic
+├── styles.css          custom CSS on top of Tailwind CDN
+├── manifest.json       PWA manifest
+├── service-worker.js   offline shell + tile cache
+├── icons/              PWA icons (192px, 512px)
+└── data/
+    ├── neighborhoods.js                    data loaded by the app
+    └── nyc-neighborhoods-2020-nta.geojson  raw export from NYC OpenData
+```
+
+## Tech notes
+
+- **No build step.** Leaflet, Tailwind (Play CDN), and SortableJS load via CDN. The service worker caches them on first visit so the app runs fully offline thereafter.
+- **Basemap** is CARTO Voyager. OpenStreetMap's own tile servers reject `file://` origins via their Referer policy, so CARTO is used instead.
+- **State** is a single object keyed by `nta2020` code. Mutations route through `updateVisit()` / `addToPlan()` helpers that save to `localStorage` and patch the affected map layer in place — no full re-render.
