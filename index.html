@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <title>NYC Neighborhood Tracker</title>
+
+  <link rel="manifest" href="manifest.json" />
+  <meta name="theme-color" content="#1e293b" />
+  <link rel="apple-touch-icon" href="icons/icon-192.png" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="NYC Tracker" />
+
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body class="h-screen w-screen overflow-hidden bg-slate-100 text-slate-800">
+
+  <header class="absolute top-0 inset-x-0 z-[1000] flex items-center justify-between px-4 py-2 bg-white/90 backdrop-blur shadow-sm pointer-events-none">
+    <h1 class="text-base sm:text-lg font-semibold pointer-events-auto">NYC Neighborhood Tracker</h1>
+    <div id="progress-chip" class="text-xs sm:text-sm font-medium text-slate-600 pointer-events-auto">
+      &mdash;
+    </div>
+  </header>
+
+  <div id="map" class="h-full w-full"></div>
+
+  <aside id="side-panel"
+    class="fixed bg-white shadow-xl z-[1100] flex flex-col transition-transform duration-200 ease-out
+           bottom-0 left-0 right-0 h-[55vh]
+           md:top-12 md:bottom-0 md:right-0 md:left-auto md:h-auto md:w-96"
+    data-collapsed="false">
+    <div class="flex items-center border-b border-slate-200 bg-white">
+      <button id="panel-toggle" class="px-3 py-2 text-slate-600 hover:bg-slate-100 flex-shrink-0 w-10" aria-label="Toggle panel">
+        <span id="panel-toggle-icon">&#9662;</span>
+      </button>
+      <nav class="flex flex-1">
+        <button id="tab-btn-details" class="tab-btn flex-1 px-2 py-2 text-sm">Details</button>
+        <button id="tab-btn-list"    class="tab-btn flex-1 px-2 py-2 text-sm">List</button>
+        <button id="tab-btn-plan"    class="tab-btn flex-1 px-2 py-2 text-sm">Plan</button>
+        <button id="tab-btn-stats"   class="tab-btn flex-1 px-2 py-2 text-sm">Stats</button>
+      </nav>
+    </div>
+    <div id="tab-details" class="flex-1 overflow-y-auto"></div>
+    <div id="tab-list"    class="flex-1 overflow-y-auto hidden"></div>
+    <div id="tab-plan"    class="flex-1 overflow-y-auto hidden"></div>
+    <div id="tab-stats"   class="flex-1 overflow-y-auto hidden"></div>
+  </aside>
+
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.6/Sortable.min.js"></script>
+  <script src="data/neighborhoods.js"></script>
+  <script src="app.js"></script>
+
+  <script>
+    // Service worker registration. No-op on file:// (where SW is unavailable).
+    if ('serviceWorker' in navigator && location.protocol !== 'file:') {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker
+          .register('./service-worker.js')
+          .catch((err) => console.warn('SW registration failed:', err));
+      });
+    }
+  </script>
+</body>
+</html>

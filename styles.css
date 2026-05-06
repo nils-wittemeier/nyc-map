@@ -1,0 +1,85 @@
+/* Custom styles on top of Tailwind. Keep small. */
+
+html, body {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+}
+
+#map {
+  position: absolute;
+  inset: 0;
+  background: #e2e8f0; /* slate-200 — visible while tiles load */
+}
+
+/* Leaflet tooltip override for hover labels */
+.nta-tooltip {
+  background: rgba(15, 23, 42, 0.85);
+  color: #f8fafc;
+  border: none;
+  border-radius: 4px;
+  padding: 2px 8px;
+  font-size: 12px;
+  font-weight: 500;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+}
+.nta-tooltip::before {
+  border-top-color: rgba(15, 23, 42, 0.85);
+}
+
+/* Tab buttons in the side panel */
+.tab-btn {
+  color: #64748b;
+  border-bottom: 2px solid transparent;
+  background: transparent;
+  cursor: pointer;
+}
+.tab-btn:hover:not(.active) {
+  background: #f1f5f9;
+}
+.tab-btn.active {
+  color: #0f172a;
+  border-bottom-color: #2563eb;
+  font-weight: 500;
+}
+
+/* Plan list — drag-and-drop reorder */
+.drag-handle {
+  cursor: grab;
+  font-size: 16px;
+  line-height: 1;
+  touch-action: none; /* prevents page scroll while starting a drag on touch */
+}
+.drag-handle:active { cursor: grabbing; }
+
+.plan-ghost  { opacity: 0.35; background: #ede9fe; } /* violet-100 placeholder */
+.plan-chosen { background: #f8fafc; }                 /* slate-50 while picked up */
+.plan-drag   { box-shadow: 0 6px 18px rgba(0,0,0,0.18); border-radius: 6px; }
+
+/* Plan — numbered marker bubble drawn over polygon centroid */
+.plan-marker { background: transparent; border: none; }
+.plan-marker-inner {
+  width: 26px;
+  height: 26px;
+  background: #7c3aed;        /* violet-600 */
+  color: #fff;
+  border: 2px solid #fff;
+  border-radius: 9999px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: 600;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.4);
+}
+
+/* Panel collapse — slides off-screen leaving a small re-open strip */
+#side-panel[data-collapsed="true"] {
+  transform: translateY(calc(100% - 38px));
+}
+@media (min-width: 768px) {
+  #side-panel[data-collapsed="true"] {
+    transform: translateX(calc(100% - 40px));
+  }
+}

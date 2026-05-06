@@ -1,0 +1,16 @@
+{
+  "name": "NYC Neighborhood Tracker",
+  "short_name": "NYC Tracker",
+  "description": "Track which NYC neighborhoods you've visited and plan walking routes.",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "any",
+  "theme_color": "#1e293b",
+  "background_color": "#1e293b",
+  "icons": [
+    { "src": "icons/icon-192.png", "type": "image/png", "sizes": "192x192" },
+    { "src": "icons/icon-512.png", "type": "image/png", "sizes": "512x512" },
+    { "src": "icons/icon-512.png", "type": "image/png", "sizes": "512x512", "purpose": "maskable" }
+  ]
+}
