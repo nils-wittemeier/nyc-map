@@ -20,6 +20,19 @@ const NYC_DEFAULT_ZOOM = 11;
 
 const BOROUGHS = ['Manhattan', 'Brooklyn', 'Queens', 'Bronx', 'Staten Island'];
 
+// Maps NYC OpenData's `ntatype` codes to user-facing labels.
+const NTA_TYPE_LABELS = {
+  '0': 'Residential',
+  '5': 'Other',           // Rikers Island
+  '6': 'Other',           // large non-residential (Navy Yard, Fort Hamilton, …)
+  '7': 'Cemetery',
+  '8': 'Airport',
+  '9': 'Park',
+};
+function ntaTypeLabel(feature) {
+  return NTA_TYPE_LABELS[feature.properties.ntatype] || 'Other';
+}
+
 const STYLE_DEFAULT = {
   color: '#475569',
   weight: 1,
@@ -352,7 +365,7 @@ function renderDetails() {
     <div class="p-4 space-y-4">
       <div>
         <h2 class="text-lg font-semibold leading-tight">${escapeHtml(f.properties.ntaname)}</h2>
-        <div class="text-xs text-slate-500">${escapeHtml(f.properties.boroname)}</div>
+        <div class="text-xs text-slate-500">${escapeHtml(f.properties.boroname)} &middot; ${escapeHtml(ntaTypeLabel(f))}</div>
       </div>
       ${v.visited
         ? `<button id="d-toggle" class="w-full rounded border border-green-600 bg-green-50 text-green-800 hover:bg-green-100 text-sm font-medium px-3 py-2 flex items-center justify-center gap-2">

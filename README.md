@@ -8,7 +8,7 @@ Built as a single-page progressive web app: vanilla JavaScript, [Leaflet](https:
 
 ## Features
 
-- **Interactive map** of all 197 residential NYC Neighborhood Tabulation Areas (NTAs). Hover for the name, click to inspect.
+- **Interactive map** of all 262 NYC Neighborhood Tabulation Areas (NTAs) — residential neighborhoods plus parks, cemeteries, airports, and a handful of special areas. Hover for the name, click to inspect.
 - **Per-neighborhood detail:** mark visited (auto-fills today's date), free-text notes, favorite-spots list.
 - **List** with full-text search and filters by borough or visited / unvisited.
 - **Plan** an ordered walking route — drag-and-drop to reorder. Stops are drawn on the map as a violet fill with numbered markers and a connecting line.
@@ -56,13 +56,14 @@ When you change app code, bump the cache version near the top of `service-worker
 
 ## Data source
 
-The map uses the **NYC 2020 Neighborhood Tabulation Areas (NTAs)** from NYC Open Data, filtered to the 197 residential NTAs (`ntatype = 0`). The filter excludes parks, cemeteries, airports, and Rikers Island.
+The map uses the **NYC 2020 Neighborhood Tabulation Areas (NTAs)** from NYC Open Data — all 262 features, including residential neighborhoods, parks, cemeteries, airports, and a few special areas.
 
 - Source: <https://data.cityofnewyork.us/resource/9nt8-h7nd.geojson>
 - Stable per-feature key: `nta2020` (e.g. `BK0101` for Greenpoint)
-- Borough comes from the dataset's `boroname` field.
+- Borough: `boroname`
+- Type: `ntatype` — `0` residential, `5` Rikers, `6` large non-residential, `7` cemetery, `8` airport, `9` park. The Details panel shows a friendly version of this.
 
-The raw GeoJSON is checked in at `data/nyc-neighborhoods-2020-nta.geojson` for transparency. At runtime the app loads `data/neighborhoods.js`, a wrapped + filtered version (wrapping is necessary because `file://` origin can't `fetch()` local JSON in most browsers). Regeneration instructions are in the comment at the top of `data/neighborhoods.js`.
+The raw GeoJSON is checked in at `data/nyc-neighborhoods-2020-nta.geojson` for transparency. At runtime the app loads `data/neighborhoods.js`, a wrapped version of that file (wrapping is necessary because `file://` origin can't `fetch()` local JSON in most browsers). Regeneration instructions are in the comment at the top of `data/neighborhoods.js`.
 
 ## Project layout
 

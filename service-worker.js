@@ -6,7 +6,7 @@
  * pruned on activate.
  */
 
-const SHELL_CACHE = 'nyc-tracker-shell-v2';
+const SHELL_CACHE = 'nyc-tracker-shell-v3';
 const TILES_CACHE = 'nyc-tracker-tiles-v1';
 
 const LOCAL_SHELL = [
